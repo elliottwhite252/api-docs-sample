@@ -1,0 +1,315 @@
+openapi: 3.1.0
+info:
+  title: Open-Meteo Forecast and Geocoding API
+  version: "1.0.0"
+  summary: Free weather forecasts and place-name search, with no API key.
+  description: |
+    An unofficial OpenAPI description of two Open-Meteo endpoints, written as a
+    documentation sample. It covers the parameters most apps need. For the
+    complete list of parameters and weather variables, see the
+    [official Open-Meteo documentation](https://open-meteo.com/en/docs).
+
+    **Authentication:** None for non-commercial use.
+
+    **Usage limits (free tier):** fewer than 10,000 calls per day, 5,000 per hour,
+    and 600 per minute, for non-commercial use only.
+
+    **Examples:** Response examples show the shape of real responses. Values are illustrative and will differ from live data.
+
+    **Data license:** Open-Meteo data is licensed under
+    [CC BY 4.0](https://creativecommons.org/licenses/by/4.0/). If you display it,
+    credit Open-Meteo.
+  contact:
+    name: Elliott White (documentation author)
+    url: https://github.com/elliottwhite252/api-docs-sample
+  license:
+    name: CC BY 4.0 (API data)
+    url: https://creativecommons.org/licenses/by/4.0/
+
+servers:
+  - url: https://api.open-meteo.com
+    description: Forecast API
+
+tags:
+  - name: Forecast
+    description: Weather forecasts for a latitude and longitude.
+  - name: Geocoding
+    description: Find the coordinates of a place by name.
+
+paths:
+  /v1/forecast:
+    get:
+      operationId: getForecast
+      tags: [Forecast]
+      summary: Get a weather forecast
+      description: |
+        Returns forecast data for one location. Request any combination of
+        `current`, `hourly`, and `daily` variables. Each block you request comes
+        back with a matching `*_units` object.
+
+        Hourly and daily data are returned as parallel arrays: the value at
+        index *n* of each variable belongs to the time at index *n* of the
+        `time` array. See [How responses are structured](../../concepts/response-structure/).
+      parameters:
+        - $ref: "#/components/parameters/latitude"
+        - $ref: "#/components/parameters/longitude"
+        - name: current
+          in: query
+          description: Comma-separated list of variables for current conditions.
+          schema: { type: string }
+          example: temperature_2m,weather_code
+        - name: hourly
+          in: query
+          description: Comma-separated list of hourly variables.
+          schema: { type: string }
+          example: temperature_2m,precipitation_probability
+        - name: daily
+          in: query
+          description: Comma-separated list of daily variables. Set `timezone` too, so each day starts at local midnight.
+          schema: { type: string }
+          example: temperature_2m_max,temperature_2m_min,weather_code
+        - name: timezone
+          in: query
+          description: A time zone database name, such as `America/Los_Angeles`, or `auto` to use the location's time zone. Times are returned in this zone.
+          schema: { type: string, default: GMT }
+          example: auto
+        - name: temperature_unit
+          in: query
+          description: Unit for temperature variables.
+          schema: { type: string, enum: [celsius, fahrenheit], default: celsius }
+        - name: wind_speed_unit
+          in: query
+          description: Unit for wind speed variables.
+          schema: { type: string, enum: [kmh, ms, mph, kn], default: kmh }
+        - name: precipitation_unit
+          in: query
+          description: Unit for precipitation variables.
+          schema: { type: string, enum: [mm, inch], default: mm }
+        - name: timeformat
+          in: query
+          description: Format of returned times. `unixtime` returns seconds since 1970-01-01 UTC.
+          schema: { type: string, enum: [iso8601, unixtime], default: iso8601 }
+        - name: forecast_days
+          in: query
+          description: Number of forecast days to return.
+          schema: { type: integer, minimum: 0, maximum: 16, default: 7 }
+        - name: past_days
+          in: query
+          description: Number of past days to include before today.
+          schema: { type: integer, minimum: 0, maximum: 92, default: 0 }
+      responses:
+        "200":
+          description: Forecast data for the requested location.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/ForecastResponse" }
+              example:
+                latitude: 35.7
+                longitude: 139.6875
+                generationtime_ms: 0.21
+                utc_offset_seconds: 32400
+                timezone: Asia/Tokyo
+                timezone_abbreviation: JST
+                elevation: 40.0
+                current_units: { time: iso8601, interval: seconds, temperature_2m: "°C", weather_code: wmo code }
+                current: { time: "2026-11-20T13:00", interval: 900, temperature_2m: 14.2, weather_code: 1 }
+                daily_units: { time: iso8601, temperature_2m_max: "°C", temperature_2m_min: "°C", weather_code: wmo code }
+                daily:
+                  time: ["2026-11-20", "2026-11-21"]
+                  temperature_2m_max: [15.8, 17.1]
+                  temperature_2m_min: [8.4, 9.0]
+                  weather_code: [1, 3]
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+  /v1/search:
+    servers:
+      - url: https://geocoding-api.open-meteo.com
+        description: Geocoding API
+    get:
+      operationId: searchLocations
+      tags: [Geocoding]
+      summary: Search for a place by name
+      description: |
+        Returns places that match a name or postal code, ranked by relevance.
+        Use the `latitude`, `longitude`, and `timezone` of a result in a
+        forecast request.
+
+        Fields with no value are left out of each result. For example, `admin2`
+        is missing when a place has no second-level administrative area.
+      parameters:
+        - name: name
+          in: query
+          required: true
+          description: |
+            Place name or postal code. Searches of fewer than two characters
+            return no results. To narrow the search, add a country or
+            first-level region after a comma, such as `Springfield, Illinois`.
+          schema: { type: string, minLength: 2 }
+          example: Tokyo
+        - name: count
+          in: query
+          description: Maximum number of results.
+          schema: { type: integer, minimum: 1, maximum: 100, default: 10 }
+        - name: language
+          in: query
+          description: Lowercase language code for place names. Falls back to English or the local name when no translation exists.
+          schema: { type: string, default: en }
+          example: es
+        - name: countryCode
+          in: query
+          description: Two-letter ISO 3166-1 country code to filter results.
+          schema: { type: string, pattern: "^[A-Z]{2}$" }
+          example: US
+        - name: format
+          in: query
+          description: Response format.
+          schema: { type: string, enum: [json, protobuf], default: json }
+      responses:
+        "200":
+          description: Matching places. When nothing matches, the response may not include `results`.
+          content:
+            application/json:
+              schema: { $ref: "#/components/schemas/SearchResponse" }
+              example:
+                results:
+                  - id: 1850147
+                    name: Tokyo
+                    latitude: 35.6895
+                    longitude: 139.69171
+                    elevation: 44.0
+                    feature_code: PPLC
+                    country_code: JP
+                    admin1_id: 1850144
+                    timezone: Asia/Tokyo
+                    population: 9733276
+                    country_id: 1861060
+                    country: Japan
+                    admin1: Tokyo
+                generationtime_ms: 0.71
+        "400":
+          $ref: "#/components/responses/BadRequest"
+
+components:
+  parameters:
+    latitude:
+      name: latitude
+      in: query
+      required: true
+      description: Latitude in decimal degrees (WGS84).
+      schema: { type: number, minimum: -90, maximum: 90 }
+      example: 35.6895
+    longitude:
+      name: longitude
+      in: query
+      required: true
+      description: Longitude in decimal degrees (WGS84). Locations west of Greenwich, including the Americas, are negative.
+      schema: { type: number, minimum: -180, maximum: 180 }
+      example: 139.69171
+
+  responses:
+    BadRequest:
+      description: The request has an invalid or missing parameter.
+      content:
+        application/json:
+          schema: { $ref: "#/components/schemas/Error" }
+          example:
+            error: true
+            reason: "Cannot initialize WeatherVariable from invalid String value temperature for key hourly"
+
+  schemas:
+    ForecastResponse:
+      type: object
+      required: [latitude, longitude, generationtime_ms, utc_offset_seconds, timezone, timezone_abbreviation, elevation]
+      properties:
+        latitude:
+          type: number
+          description: Latitude of the forecast grid cell used. It can differ slightly from the requested latitude.
+        longitude:
+          type: number
+          description: Longitude of the forecast grid cell used.
+        elevation:
+          type: number
+          description: Elevation in meters used for the forecast.
+        generationtime_ms:
+          type: number
+          description: Time the server took to generate the response, in milliseconds.
+        utc_offset_seconds:
+          type: integer
+          description: Offset from UTC for the requested time zone, in seconds.
+        timezone:
+          type: string
+          description: Time zone used for all returned times.
+        timezone_abbreviation:
+          type: string
+          description: Abbreviation of the time zone, such as `PST`.
+        current:
+          type: object
+          description: Current conditions. Includes `time`, `interval` (seconds), and one field per requested variable.
+          additionalProperties: true
+        current_units:
+          $ref: "#/components/schemas/Units"
+        hourly:
+          $ref: "#/components/schemas/TimeSeries"
+        hourly_units:
+          $ref: "#/components/schemas/Units"
+        daily:
+          $ref: "#/components/schemas/TimeSeries"
+        daily_units:
+          $ref: "#/components/schemas/Units"
+
+    TimeSeries:
+      type: object
+      description: A `time` array plus one array per requested variable. All arrays have the same length, and index *n* in each refers to the same time.
+      required: [time]
+      properties:
+        time:
+          type: array
+          items: { type: [string, integer] }
+          description: ISO 8601 times, or Unix timestamps if `timeformat=unixtime`.
+      additionalProperties:
+        type: array
+        items: { type: [number, string, "null"] }
+
+    Units:
+      type: object
+      description: The unit of each returned variable, keyed by variable name.
+      additionalProperties: { type: string }
+
+    SearchResponse:
+      type: object
+      properties:
+        results:
+          type: array
+          items: { $ref: "#/components/schemas/Location" }
+        generationtime_ms:
+          type: number
+          description: Time the server took to generate the response, in milliseconds.
+
+    Location:
+      type: object
+      required: [id, name, latitude, longitude]
+      properties:
+        id: { type: integer, description: Unique location ID. }
+        name: { type: string, description: Place name, translated if available. }
+        latitude: { type: number, description: Latitude in decimal degrees. }
+        longitude: { type: number, description: Longitude in decimal degrees. }
+        elevation: { type: number, description: Elevation in meters above sea level. }
+        feature_code: { type: string, description: GeoNames feature code, such as `PPL` for a populated place. }
+        country_code: { type: string, description: Two-letter ISO country code. }
+        country: { type: string, description: Country name, translated if available. }
+        country_id: { type: integer, description: Unique ID of the country. }
+        timezone: { type: string, description: Time zone database name, ready to pass to a forecast request. }
+        population: { type: integer, description: Population, if known. }
+        postcodes: { type: array, items: { type: string }, description: Postal codes for the place. }
+        admin1: { type: string, description: First-level administrative area, such as a state. }
+        admin2: { type: string, description: Second-level administrative area, such as a county. }
+        admin3: { type: string, description: Third-level administrative area. }
+        admin4: { type: string, description: Fourth-level administrative area. }
+
+    Error:
+      type: object
+      required: [error, reason]
+      properties:
+        error: { type: boolean, const: true, description: Always `true` for an error. }
+        reason: { type: string, description: What went wrong. }
