@@ -1,0 +1,17 @@
+Diátaxis
+Elliott
+MkDocs
+Open-Meteo
+Redoc
+Spectral
+Vale
+(?i)geocoding
+(?i)geocode
+(?i)debounce
+(?i)timestamps?
+repo
+WMO
+GMT
+mph
+llms
+APIs

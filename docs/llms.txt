@@ -1,0 +1,32 @@
+# Open-Meteo API guide
+
+> An unofficial guide to the Open-Meteo forecast and geocoding APIs. Open-Meteo is a free weather API with no API key for non-commercial use (fewer than 10,000 calls per day). Data is licensed CC BY 4.0 and needs attribution.
+
+Key facts:
+
+- Forecast endpoint: GET https://api.open-meteo.com/v1/forecast (requires latitude and longitude)
+- Geocoding endpoint: GET https://geocoding-api.open-meteo.com/v1/search (requires name)
+- Hourly and daily data are parallel arrays matched by index to a `time` array
+- Errors return HTTP 400 with {"error": true, "reason": "..."}
+- Set `timezone` (or `timezone=auto`) when requesting daily data
+
+## Guides
+
+- [Get your first forecast](https://elliottwhite252.github.io/api-docs-sample/tutorial/): geocode a city, then request current and daily data
+- [Get a daily forecast](https://elliottwhite252.github.io/api-docs-sample/how-to/daily-forecast/): seven-day highs, lows, rain chance, and conditions
+- [Change units](https://elliottwhite252.github.io/api-docs-sample/how-to/change-units/): Fahrenheit, mph, inches
+- [Handle errors](https://elliottwhite252.github.io/api-docs-sample/how-to/handle-errors/): 400 errors, empty searches, rate limits
+
+## Concepts
+
+- [How responses are structured](https://elliottwhite252.github.io/api-docs-sample/concepts/response-structure/): parallel arrays, units, times, and coordinates
+
+## Reference
+
+- [OpenAPI spec](https://elliottwhite252.github.io/api-docs-sample/openapi.yaml): machine-readable description of both endpoints
+- [API reference](https://elliottwhite252.github.io/api-docs-sample/reference/api/)
+- [Weather codes](https://elliottwhite252.github.io/api-docs-sample/reference/weather-codes/): WMO code to description
+
+## Optional
+
+- [Official Open-Meteo documentation](https://open-meteo.com/en/docs): every parameter and variable

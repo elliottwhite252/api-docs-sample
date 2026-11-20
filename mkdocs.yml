@@ -1,0 +1,56 @@
+site_name: Open-Meteo API Guide
+site_description: An unofficial guide to the Open-Meteo forecast and geocoding APIs. A documentation sample by Elliott White.
+site_author: Elliott White
+site_url: https://elliottwhite252.github.io/api-docs-sample/
+repo_url: https://github.com/elliottwhite252/api-docs-sample
+repo_name: elliottwhite252/api-docs-sample
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  palette:
+    - scheme: default
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/brightness-7
+        name: Switch to dark mode
+    - scheme: slate
+      primary: indigo
+      accent: light blue
+      toggle:
+        icon: material/brightness-4
+        name: Switch to light mode
+  features:
+    - navigation.sections
+    - navigation.footer
+    - content.code.copy
+    - content.action.edit
+    - search.highlight
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.highlight
+  - pymdownx.inlinehilite
+
+nav:
+  - Home: index.md
+  - Tutorial:
+      - Get your first forecast: tutorial.md
+  - How-to guides:
+      - Get a daily forecast: how-to/daily-forecast.md
+      - Change units: how-to/change-units.md
+      - Handle errors: how-to/handle-errors.md
+  - Concepts:
+      - How responses are structured: concepts/response-structure.md
+  - Reference:
+      - API reference: reference/api.md
+      - Weather codes: reference/weather-codes.md
+  - About this guide: about.md
